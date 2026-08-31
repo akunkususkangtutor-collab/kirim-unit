@@ -302,9 +302,10 @@ document.getElementById('btn-download').addEventListener('click', function(){
   wrapper.style.lineHeight = '1.5';
   wrapper.style.position = 'fixed';
   wrapper.style.top = '0';
-  wrapper.style.left = '-9999px';
+  wrapper.style.left = '0';
   wrapper.style.width = '595px';
   wrapper.style.background = '#fff';
+  wrapper.style.zIndex = '999999';
   wrapper.innerHTML =
     '<img src="' + logoDataUri + '" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60%;max-width:320px;opacity:0.06;z-index:0;" />' +
     '<div style="position:relative;z-index:1;">' +

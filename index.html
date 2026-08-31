@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>unlockRstore — Surat Pernyataan Service Kirim Unit</title>
+
+<!-- PDF dibuat langsung dengan jsPDF. Tidak memakai html2pdf/html2canvas. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f4f4f2;
+  margin: 0;
+  padding: 24px 16px;
+  color: #1a1a1a;
+}
+
+.container {
+  max-width: 560px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e2df;
+  padding: 24px;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 20px;
+}
+
+.disclaimer {
+  background: #f7f7f5;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  max-height: 240px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #444;
+}
+
+.disclaimer p.title {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+}
+
+.disclaimer ol {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.disclaimer li {
+  margin-bottom: 6px;
+}
+
+.section-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field label {
+  font-size: 13px;
+  color: #555;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d5d5d2;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: #999;
+}
+
+.error {
+  display: none;
+  font-size: 13px;
+  color: #c0392b;
+  margin: 4px 0 0;
+}
+
+.divider {
+  border-top: 1px solid #e2e2df;
+  margin: 20px 0 16px;
+}
+
+.agree-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+}
+
+.agree-row input {
+  margin-top: 2px;
+}
+
+#sig-pelanggan {
+  width: 100%;
+  height: 140px;
+  border: 1px solid #d5d5d2;
+  border-radius: 8px;
+  background: #fff;
+  touch-action: none;
+  display: block;
+}
+
+.sig-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.btn-clear-sig {
+  padding: 4px 10px;
+  border: 1px solid #d5d5d2;
+  background: #fff;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button {
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#btn-download {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#btn-download:hover {
+  background: #333;
+}
+
+#btn-download:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+#status {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  margin-top: 8px;
+  min-height: 18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+
+    <h1>unlockRstore</h1>
+    <p class="subtitle">Surat pernyataan &amp; persetujuan service kirim unit</p>
+
+    <div class="disclaimer">
+      <p class="title">Surat pernyataan &amp; persetujuan service kirim unit</p>
+      <ol>
+        <li>Saya selaku pelanggan menyatakan bahwa perangkat yang saya kirimkan kepada unlockRstore adalah milik saya sendiri atau saya memiliki hak yang sah untuk menggunakan dan melakukan service terhadap perangkat tersebut.</li>
+        <li>Saya menyatakan bahwa perangkat tersebut bukan barang curian, hasil penipuan, penggelapan, atau hasil tindak pidana lainnya.</li>
+        <li>Saya bertanggung jawab penuh atas keaslian, kepemilikan, dan asal-usul perangkat yang saya kirimkan.</li>
+        <li>Apabila di kemudian hari terdapat permasalahan hukum yang berkaitan dengan kepemilikan atau asal-usul perangkat tersebut, maka saya bersedia bertanggung jawab dan menyelesaikannya sesuai ketentuan hukum yang berlaku.</li>
+        <li>unlockRstore berhak menolak atau menghentikan pengerjaan apabila ditemukan indikasi bahwa perangkat bermasalah secara hukum atau terdapat ketidaksesuaian informasi dari pelanggan.</li>
+        <li>Segala konsekuensi hukum yang timbul akibat perangkat yang ternyata bukan milik sah pelanggan atau berkaitan dengan tindak pidana menjadi tanggung jawab pelanggan, sepanjang hal tersebut berada di luar kendali unlockRstore.</li>
+        <li>Dengan menandatangani pernyataan ini, saya menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan di atas.</li>
+      </ol>
+    </div>
+
+    <p class="section-title">Data pelanggan</p>
+
+    <div class="field">
+      <label for="f-nama">Nama</label>
+      <input type="text" id="f-nama" placeholder="Nama lengkap">
+      <p class="error" id="err-nama">Isi nama terlebih dahulu</p>
+    </div>
+
+    <div class="field">
+      <label for="f-wa">No. WhatsApp</label>
+      <input type="tel" id="f-wa" placeholder="08xxxxxxxxxx">
+      <p class="error" id="err-wa">Isi nomor WhatsApp</p>
+    </div>
+
+    <div class="field">
+      <label for="f-model">Jenis/Model HP</label>
+      <input type="text" id="f-model" placeholder="Contoh: iPhone 13 Pro">
+      <p class="error" id="err-model">Isi jenis/model HP</p>
+    </div>
+
+    <div class="field">
+      <label for="f-imei">IMEI/Serial Number</label>
+      <input type="text" id="f-imei" placeholder="Nomor IMEI atau serial number">
+      <p class="error" id="err-imei">Isi IMEI/serial number</p>
+    </div>
+
+    <div class="field">
+      <label for="f-tanggal">Tanggal</label>
+      <input type="date" id="f-tanggal">
+      <p class="error" id="err-tanggal">Pilih tanggal</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <label class="agree-row">
+      <input type="checkbox" id="f-setuju">
+      <span>Saya telah membaca, memahami, dan menyetujui seluruh ketentuan surat pernyataan di atas.</span>
+    </label>
+
+    <p class="error" id="err-setuju">Centang persetujuan untuk melanjutkan</p>
+
+    <p class="section-title" style="margin-top:18px;">Tanda tangan pelanggan</p>
+
+    <div class="field">
+      <label for="f-nama-ttd">Nama (sesuai tanda tangan)</label>
+      <input type="text" id="f-nama-ttd" placeholder="Nama lengkap pelanggan">
+      <p class="error" id="err-nama-ttd">Isi nama sesuai tanda tangan</p>
+    </div>
+
+    <canvas id="sig-pelanggan" width="500" height="140"></canvas>
+
+    <div class="sig-row">
+      <p class="error" id="err-sig-pelanggan" style="margin-right:auto;">Bubuhkan tanda tangan terlebih dahulu</p>
+      <button class="btn-clear-sig" type="button" id="btn-clear-sig">Hapus</button>
+    </div>
+
+    <button id="btn-download" type="button">Unduh sebagai PDF</button>
+    <p id="status"></p>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var today = new Date();
+  var yyyy = today.getFullYear();
+  var mm = String(today.getMonth() + 1).padStart(2, '0');
+  var dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('f-tanggal').value = yyyy + '-' + mm + '-' + dd;
+
+  ['nama','wa','model','imei','tanggal'].forEach(function(id) {
+    var el = document.getElementById('f-' + id);
+    if (el) {
+      el.addEventListener('input', function () {
+        document.getElementById('err-' + id).style.display = 'none';
+      });
+      el.addEventListener('change', function () {
+        document.getElementById('err-' + id).style.display = 'none';
+      });
+    }
+  });
+
+  document.getElementById('f-setuju').addEventListener('change', function () {
+    document.getElementById('err-setuju').style.display = 'none';
+  });
+
+  var sigCanvas = document.getElementById('sig-pelanggan');
+  var sigCtx = sigCanvas.getContext('2d');
+  var sigDrawing = false;
+  var sigHasSignature = false;
+
+  function sigResize() {
+    var rect = sigCanvas.getBoundingClientRect();
+    var ratio = window.devicePixelRatio || 1;
+
+    var oldCanvas = document.createElement('canvas');
+    oldCanvas.width = sigCanvas.width;
+    oldCanvas.height = sigCanvas.height;
+    oldCanvas.getContext('2d').drawImage(sigCanvas, 0, 0);
+
+    sigCanvas.width = Math.max(1, Math.round(rect.width * ratio));
+    sigCanvas.height = Math.max(1, Math.round(140 * ratio));
+
+    sigCtx = sigCanvas.getContext('2d');
+    sigCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    sigCtx.lineWidth = 2;
+    sigCtx.lineCap = 'round';
+    sigCtx.lineJoin = 'round';
+    sigCtx.strokeStyle = '#111';
+
+    if (sigHasSignature) {
+      sigCtx.drawImage(
+        oldCanvas,
+        0, 0, oldCanvas.width, oldCanvas.height,
+        0, 0, rect.width, 140
+      );
+    }
+  }
+
+  sigResize();
+  window.addEventListener('resize', sigResize);
+
+  function sigGetPos(e) {
+    var rect = sigCanvas.getBoundingClientRect();
+    var point = e.touches ? e.touches[0] : e;
+    return {
+      x: point.clientX - rect.left,
+      y: point.clientY - rect.top
+    };
+  }
+
+  function sigStart(e) {
+    sigDrawing = true;
+    sigHasSignature = true;
+    var p = sigGetPos(e);
+    sigCtx.beginPath();
+    sigCtx.moveTo(p.x, p.y);
+    document.getElementById('err-sig-pelanggan').style.display = 'none';
+    e.preventDefault();
+  }
+
+  function sigMove(e) {
+    if (!sigDrawing) return;
+    var p = sigGetPos(e);
+    sigCtx.lineTo(p.x, p.y);
+    sigCtx.stroke();
+    e.preventDefault();
+  }
+
+  function sigEnd() {
+    sigDrawing = false;
+  }
+
+  sigCanvas.addEventListener('mousedown', sigStart);
+  sigCanvas.addEventListener('mousemove', sigMove);
+  window.addEventListener('mouseup', sigEnd);
+
+  sigCanvas.addEventListener('touchstart', sigStart, {passive:false});
+  sigCanvas.addEventListener('touchmove', sigMove, {passive:false});
+  sigCanvas.addEventListener('touchend', sigEnd);
+
+  document.getElementById('btn-clear-sig').addEventListener('click', function () {
+    sigCtx.clearRect(
+      0, 0,
+      sigCanvas.width,
+      sigCanvas.height
+    );
+    sigHasSignature = false;
+  });
+
+  document.getElementById('f-nama-ttd').addEventListener('input', function () {
+    document.getElementById('err-nama-ttd').style.display = 'none';
+  });
+
+  function showErr(id) {
+    var el = document.getElementById('err-' + id);
+    if (el) el.style.display = 'block';
+  }
+
+  function formatDate(value) {
+    var d = new Date(value + 'T00:00:00');
+    return d.toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  function safeFileName(value) {
+    var name = value
+      .replace(/[^a-z0-9\s_-]/gi, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .toLowerCase();
+
+    return name || 'pelanggan';
+  }
+
+  /*
+   * Menulis teks dengan auto-wrap dan otomatis pindah halaman.
+   * Ini sengaja menggunakan jsPDF langsung agar tidak bergantung
+   * pada DOM/html2canvas/html2pdf yang sebelumnya menghasilkan blank PDF.
+   */
+  function createPDF(data) {
+    var jsPDF = window.jspdf && window.jspdf.jsPDF;
+
+    if (!jsPDF) {
+      throw new Error('Library PDF belum berhasil dimuat.');
+    }
+
+    var pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
+    });
+
+    var pageW = 210;
+    var pageH = 297;
+    var margin = 16;
+    var contentW = pageW - margin * 2;
+    var y = 18;
+
+    function newPage() {
+      pdf.addPage();
+      y = 18;
+    }
+
+    function ensureSpace(height) {
+      if (y + height > pageH - 16) {
+        newPage();
+      }
+    }
+
+    function textWrapped(text, x, width, fontSize, lineHeight, options) {
+      options = options || {};
+      pdf.setFontSize(fontSize);
+
+      var lines = pdf.splitTextToSize(String(text), width);
+      var lh = lineHeight || (fontSize * 0.42);
+
+      ensureSpace(lines.length * lh + 2);
+
+      pdf.text(lines, x, y, options);
+      y += lines.length * lh;
+
+      return lines.length;
+    }
+
+    function drawTitle() {
+      pdf.setTextColor(20, 20, 20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(18);
+      pdf.text('unlockRstore', margin, y);
+      y += 7;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(
+        'Surat pernyataan & persetujuan service kirim unit',
+        margin,
+        y
+      );
+
+      y += 5;
+
+      pdf.setDrawColor(30, 30, 30);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, y, pageW - margin, y);
+
+      y += 9;
+    }
+
+    function drawSectionTitle(title) {
+      ensureSpace(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(25, 25, 25);
+      pdf.text(title, margin, y);
+      y += 6;
+    }
+
+    function drawDisclaimer() {
+      drawSectionTitle('SURAT PERNYATAAN & PERSETUJUAN');
+
+      var items = [
+        'Saya selaku pelanggan menyatakan bahwa perangkat yang saya kirimkan kepada unlockRstore adalah milik saya sendiri atau saya memiliki hak yang sah untuk menggunakan dan melakukan service terhadap perangkat tersebut.',
+        'Saya menyatakan bahwa perangkat tersebut bukan barang curian, hasil penipuan, penggelapan, atau hasil tindak pidana lainnya.',
+        'Saya bertanggung jawab penuh atas keaslian, kepemilikan, dan asal-usul perangkat yang saya kirimkan.',
+        'Apabila di kemudian hari terdapat permasalahan hukum yang berkaitan dengan kepemilikan atau asal-usul perangkat tersebut, maka saya bersedia bertanggung jawab dan menyelesaikannya sesuai ketentuan hukum yang berlaku.',
+        'unlockRstore berhak menolak atau menghentikan pengerjaan apabila ditemukan indikasi bahwa perangkat bermasalah secara hukum atau terdapat ketidaksesuaian informasi dari pelanggan.',
+        'Segala konsekuensi hukum yang timbul akibat perangkat yang ternyata bukan milik sah pelanggan atau berkaitan dengan tindak pidana menjadi tanggung jawab pelanggan, sepanjang hal tersebut berada di luar kendali unlockRstore.',
+        'Dengan menandatangani pernyataan ini, saya menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan di atas.'
+      ];
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9.5);
+      pdf.setTextColor(65, 65, 65);
+
+      items.forEach(function (item, index) {
+        var number = (index + 1) + '.';
+        var numberW = 6;
+        var lines = pdf.splitTextToSize(item, contentW - numberW);
+
+        var lineH = 4.3;
+        var blockH = lines.length * lineH + 3;
+
+        ensureSpace(blockH);
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(number, margin, y);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(lines, margin + numberW, y);
+
+        y += blockH;
+      });
+
+      y += 2;
+    }
+
+    function drawDataTable() {
+      drawSectionTitle('DATA PELANGGAN');
+
+      var rows = [
+        ['Nama', data.nama],
+        ['No. WhatsApp', data.wa],
+        ['Jenis/Model HP', data.model],
+        ['IMEI/Serial Number', data.imei],
+        ['Tanggal', data.tanggalFormatted]
+      ];
+
+      var labelW = 45;
+      var valueW = contentW - labelW;
+      var rowHMin = 9;
+
+      rows.forEach(function (row) {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9.5);
+
+        var valueLines = pdf.splitTextToSize(
+          String(row[1]),
+          valueW - 6
+        );
+
+        var rowH = Math.max(
+          rowHMin,
+          valueLines.length * 4.3 + 5
+        );
+
+        ensureSpace(rowH + 1);
+
+        pdf.setFillColor(247, 247, 245);
+        pdf.setDrawColor(215, 215, 212);
+        pdf.rect(margin, y - 5, labelW, rowH, 'FD');
+
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(margin + labelW, y - 5, valueW, rowH, 'FD');
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(70, 70, 70);
+        pdf.text(row[0], margin + 3, y);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(25, 25, 25);
+        pdf.text(valueLines, margin + labelW + 3, y);
+
+        y += rowH;
+      });
+
+      y += 7;
+    }
+
+    function drawSignature() {
+      drawSectionTitle('TANDA TANGAN PELANGGAN');
+
+      ensureSpace(45);
+
+      pdf.setDrawColor(210, 210, 210);
+      pdf.setLineWidth(0.3);
+      pdf.rect(margin, y, contentW, 35);
+
+      try {
+        pdf.addImage(
+          data.sigDataUrl,
+          'PNG',
+          margin + 5,
+          y + 3,
+          Math.min(100, contentW - 10),
+          28,
+          undefined,
+          'FAST'
+        );
+      } catch (e) {
+        console.warn('Tanda tangan tidak dapat dimasukkan:', e);
+      }
+
+      y += 41;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(25, 25, 25);
+      pdf.text(data.namaTtd, margin, y);
+
+      y += 8;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(120, 120, 120);
+
+      var footer = 'unlockRstore — dokumen dibuat pada ' +
+        new Date().toLocaleDateString('id-ID', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+      pdf.text(footer, margin, y);
+    }
+
+    drawTitle();
+    drawDisclaimer();
+    drawDataTable();
+    drawSignature();
+
+    /*
+     * Nomor halaman.
+     */
+    var totalPages = pdf.getNumberOfPages();
+
+    for (var p = 1; p <= totalPages; p++) {
+      pdf.setPage(p);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(145, 145, 145);
+      pdf.text(
+        'Halaman ' + p + ' / ' + totalPages,
+        pageW - margin,
+        pageH - 7,
+        { align: 'right' }
+      );
+    }
+
+    pdf.save(
+      'surat-pernyataan-service-' +
+      safeFileName(data.nama) +
+      '.pdf'
+    );
+  }
+
+  document.getElementById('btn-download').addEventListener('click', function () {
+    var btn = this;
+
+    var nama = document.getElementById('f-nama').value.trim();
+    var wa = document.getElementById('f-wa').value.trim();
+    var model = document.getElementById('f-model').value.trim();
+    var imei = document.getElementById('f-imei').value.trim();
+    var tanggal = document.getElementById('f-tanggal').value;
+    var setuju = document.getElementById('f-setuju').checked;
+    var namaTtd = document.getElementById('f-nama-ttd').value.trim();
+
+    var valid = true;
+
+    if (!nama) {
+      showErr('nama');
+      valid = false;
+    }
+
+    if (!wa) {
+      showErr('wa');
+      valid = false;
+    }
+
+    if (!model) {
+      showErr('model');
+      valid = false;
+    }
+
+    if (!imei) {
+      showErr('imei');
+      valid = false;
+    }
+
+    if (!tanggal) {
+      showErr('tanggal');
+      valid = false;
+    }
+
+    if (!setuju) {
+      showErr('setuju');
+      valid = false;
+    }
+
+    if (!namaTtd) {
+      showErr('nama-ttd');
+      valid = false;
+    }
+
+    if (!sigHasSignature) {
+      showErr('sig-pelanggan');
+      valid = false;
+    }
+
+    if (!valid) {
+      document.getElementById('status').textContent =
+        'Lengkapi data terlebih dahulu.';
+      return;
+    }
+
+    var status = document.getElementById('status');
+
+    try {
+      btn.disabled = true;
+      status.textContent = 'Membuat PDF...';
+
+      var data = {
+        nama: nama,
+        wa: wa,
+        model: model,
+        imei: imei,
+        tanggalFormatted: formatDate(tanggal),
+        namaTtd: namaTtd,
+        sigDataUrl: sigCanvas.toDataURL('image/png')
+      };
+
+      /*
+       * Beri browser satu kesempatan untuk menyelesaikan event touch/canvas
+       * sebelum jsPDF membaca gambar tanda tangan.
+       */
+      setTimeout(function () {
+        try {
+          createPDF(data);
+          status.textContent = 'PDF berhasil diunduh.';
+        } catch (error) {
+          console.error('PDF ERROR:', error);
+          status.textContent =
+            'Gagal membuat PDF: ' + (error.message || 'coba lagi.');
+        } finally {
+          btn.disabled = false;
+        }
+      }, 50);
+
+    } catch (error) {
+      console.error(error);
+      status.textContent =
+        'Gagal membuat PDF: ' + (error.message || 'coba lagi.');
+      btn.disabled = false;
+    }
+  });
+
+})();
+</script>
+
+</body>
+</html>

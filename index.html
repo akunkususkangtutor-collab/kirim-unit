@@ -184,9 +184,82 @@ button {
   background: #333;
 }
 
+#btn-whatsapp {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: #25D366;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#btn-whatsapp:hover {
+  filter: brightness(.95);
+}
+
+#btn-whatsapp:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.transaction-preview {
+  display: none;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px dashed #d5d5d2;
+  border-radius: 8px;
+  background: #fafaf8;
+  font-size: 12px;
+  color: #555;
+}
+
+.transaction-preview strong {
+  color: #1a1a1a;
+}
+
 #btn-download:disabled {
   opacity: .6;
   cursor: wait;
+}
+
+
+select#f-model {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #d5d5d2;
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.auto-date-box {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e4e4e0;
+  border-radius: 8px;
+  background: #f8f8f6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.auto-date-box strong {
+  font-size: 13px;
+  color: #333;
+}
+
+.auto-date-box span {
+  color: #777;
 }
 
 #status {
@@ -236,7 +309,15 @@ button {
 
     <div class="field">
       <label for="f-model">Jenis/Model HP</label>
-      <input type="text" id="f-model" placeholder="Contoh: iPhone 13 Pro">
+      <select id="f-model" name="model" required>
+      <option value="">Pilih model iPhone</option>
+      <option value="iPhone XR">iPhone XR</option>
+      <option value="iPhone XS">iPhone XS</option>
+      <option value="iPhone XS Max">iPhone XS Max</option>
+      <option value="iPhone 11">iPhone 11</option>
+      <option value="iPhone 11 Pro">iPhone 11 Pro</option>
+      <option value="iPhone 11 Pro Max">iPhone 11 Pro Max</option>
+    </select>
       <p class="error" id="err-model">Isi jenis/model HP</p>
     </div>
 
@@ -247,9 +328,10 @@ button {
     </div>
 
     <div class="field">
-      <label for="f-tanggal">Tanggal</label>
-      <input type="date" id="f-tanggal">
-      <p class="error" id="err-tanggal">Pilih tanggal</p>
+      <div class="auto-date-box">
+      <strong>Tanggal & jam service</strong>
+      <span id="auto-datetime">Otomatis saat PDF dikirim</span>
+    </div><p class="error" id="err-tanggal">Pilih tanggal</p>
     </div>
 
     <div class="divider"></div>
@@ -277,6 +359,8 @@ button {
     </div>
 
     <button id="btn-download" type="button">Unduh sebagai PDF</button>
+    <button id="btn-whatsapp" type="button" disabled>Kirim PDF ke WhatsApp</button>
+    <div class="transaction-preview" id="transaction-preview">ID Transaksi: <strong id="transaction-id-preview"></strong></div>
     <p id="status"></p>
 
   </div>
@@ -286,13 +370,15 @@ button {
 (function () {
   'use strict';
 
-  var today = new Date();
-  var yyyy = today.getFullYear();
-  var mm = String(today.getMonth() + 1).padStart(2, '0');
-  var dd = String(today.getDate()).padStart(2, '0');
-  document.getElementById('f-tanggal').value = yyyy + '-' + mm + '-' + dd;
+  // Konfigurasi koneksi Google Apps Script.
+  var DRIVE_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbz8eCMrW-Uo2XUYwlDFrep2d42kHcp3pcDpOkAfsn7-BtY1UhmIoIokGUbs66VcXCzG/exec';
+  // Lapisan pengaman dasar: nilainya harus sama dengan UPLOAD_KEY di Code.gs.
+  var UPLOAD_KEY = 'URS-2026-9F7K2M4P8X6Q';
 
-  ['nama','wa','model','imei','tanggal'].forEach(function(id) {
+  var lastGeneratedPDF = null;
+  var lastGeneratedData = null;
+
+  ['nama','wa','model','imei'].forEach(function(id) {
     var el = document.getElementById('f-' + id);
     if (el) {
       el.addEventListener('input', function () {
@@ -421,6 +507,94 @@ button {
     return name || 'pelanggan';
   }
 
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function randomCode(length) {
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var out = '';
+    for (var i = 0; i < length; i++) {
+      out += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return out;
+  }
+
+  function generateTransactionIdWIB(date) {
+    var parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(date).reduce(function (o, p) {
+      o[p.type] = p.value;
+      return o;
+    }, {});
+
+    return 'URS-' + parts.year + parts.month + parts.day + '-' +
+      parts.hour + parts.minute + parts.second + '-' + randomCode(4);
+  }
+
+  function generateTransactionId(date) {
+    return 'URS-' +
+      date.getFullYear() +
+      pad2(date.getMonth() + 1) +
+      pad2(date.getDate()) + '-' +
+      pad2(date.getHours()) +
+      pad2(date.getMinutes()) +
+      pad2(date.getSeconds()) + '-' +
+      randomCode(4);
+  }
+
+  function normalizeWhatsAppNumber(value) {
+    var n = String(value || '').replace(/[^0-9]/g, '');
+    if (n.indexOf('0') === 0) n = '62' + n.substring(1);
+    if (n.indexOf('62') !== 0) return null;
+    return n;
+  }
+
+  function buildWhatsAppMessage(data) {
+    return 'Halo ' + data.nama + ',\n\n' +
+      'Dokumen service kirim unit dari unlockRstore sudah dibuat.\n\n' +
+      'ID Transaksi: ' + data.transactionId + '\n' +
+      'Perangkat: ' + data.model + '\n' +
+      'IMEI/Serial: ' + data.imei + '\n' +
+      'Tanggal Service: ' + data.tanggalFormatted + '\n\n' +
+      'Dokumen PDF akan saya kirim melalui WhatsApp ini. Terima kasih.';
+  }
+
+  async function sharePDFToWhatsApp(result, data) {
+    var number = normalizeWhatsAppNumber(data.wa);
+    var message = buildWhatsAppMessage(data);
+
+    if (navigator.share && navigator.canShare) {
+      try {
+        var file = new File([result.blob], result.filename, { type: 'application/pdf' });
+        var shareData = { files: [file], title: 'Surat Service ' + data.transactionId, text: message };
+        if (navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+          return true;
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') return false;
+      }
+    }
+
+    // Fallback: buka chat WhatsApp dengan pesan yang sudah terisi.
+    // File PDF tetap harus dipilih/dilampirkan dari hasil download.
+    if (number) {
+      var waUrl = 'https://wa.me/' + number + '?text=' + encodeURIComponent(message);
+      window.open(waUrl, '_blank');
+    } else {
+      window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
+    }
+    return true;
+  }
+
   /*
    * Menulis teks dengan auto-wrap dan otomatis pindah halaman.
    * Ini sengaja menggunakan jsPDF langsung agar tidak bergantung
@@ -521,6 +695,11 @@ button {
       pdf.line(margin, y, pageW - margin, y);
 
       y += 9;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(90, 90, 90);
+      pdf.text('ID Transaksi: ' + data.transactionId, pageW - margin, 18, { align: 'right' });
     }
 
     function drawSectionTitle(title) {
@@ -575,12 +754,14 @@ button {
       drawSectionTitle('DATA PELANGGAN');
 
       var rows = [
+        ['ID Transaksi', data.transactionId],
         ['Nama', data.nama],
         ['No. WhatsApp', data.wa],
         ['Jenis/Model HP', data.model],
         ['IMEI/Serial Number', data.imei],
         ['Tanggal Service', data.tanggalFormatted],
-        ['Tanggal & Jam Dikirim', data.sentDate + ' • ' + data.sentTime + ' WIB']
+        ['Tanggal & Jam Dikirim', data.sentDate + ' • ' + data.sentTime + ' WIB'],
+        ['ID Transaksi', data.transactionId]
       ];
 
       var labelW = 45;
@@ -696,7 +877,7 @@ button {
     }
 
     var fileStamp = data.sentAtISO.replace(/[:.]/g, '-').replace('T', '_').replace('Z', '');
-    var filename = 'surat-pernyataan-service-' + safeFileName(data.nama) + '-' + fileStamp + '.pdf';
+    var filename = 'surat-pernyataan-service-' + safeFileName(data.nama) + '-' + data.transactionId + '.pdf';
 
     // Kembalikan PDF sebagai Blob + Base64 agar bisa sekaligus
     // di-download ke perangkat pelanggan dan dikirim ke Google Drive.
@@ -707,6 +888,27 @@ button {
     };
   }
 
+  document.getElementById('btn-whatsapp').addEventListener('click', async function () {
+    if (!lastGeneratedPDF || !lastGeneratedData) {
+      document.getElementById('status').textContent = 'Buat PDF terlebih dahulu.';
+      return;
+    }
+
+    var waBtn = this;
+    waBtn.disabled = true;
+    document.getElementById('status').textContent = 'Membuka WhatsApp untuk mengirim PDF...';
+
+    try {
+      await sharePDFToWhatsApp(lastGeneratedPDF, lastGeneratedData);
+      document.getElementById('status').textContent = 'WhatsApp dibuka. Jika PDF belum terlampir otomatis, pilih file PDF yang baru di-download.';
+    } catch (error) {
+      console.error('WHATSAPP SHARE ERROR:', error);
+      document.getElementById('status').textContent = 'Tidak dapat membuka WhatsApp. Coba lagi.';
+    } finally {
+      waBtn.disabled = false;
+    }
+  });
+
   document.getElementById('btn-download').addEventListener('click', function () {
     var btn = this;
 
@@ -714,7 +916,6 @@ button {
     var wa = document.getElementById('f-wa').value.trim();
     var model = document.getElementById('f-model').value.trim();
     var imei = document.getElementById('f-imei').value.trim();
-    var tanggal = document.getElementById('f-tanggal').value;
     var setuju = document.getElementById('f-setuju').checked;
     var namaTtd = document.getElementById('f-nama-ttd').value.trim();
 
@@ -737,11 +938,6 @@ button {
 
     if (!imei) {
       showErr('imei');
-      valid = false;
-    }
-
-    if (!tanggal) {
-      showErr('tanggal');
       valid = false;
     }
 
@@ -772,17 +968,39 @@ button {
       btn.disabled = true;
       status.textContent = 'Membuat PDF...';
 
+      // Waktu resmi diambil saat pelanggan menekan tombol, menggunakan WIB.
       var sentAt = new Date();
-      var sentDate = sentAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-      var sentTime = sentAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      var sentDate = sentAt.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Jakarta'
+      });
+      var sentTime = sentAt.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Jakarta'
+      });
 
       var data = {
         nama: nama, wa: wa, model: model, imei: imei,
-        tanggalFormatted: formatDate(tanggal),
+        tanggalFormatted: sentDate,
         namaTtd: namaTtd, sentDate: sentDate, sentTime: sentTime,
         sentAtISO: sentAt.toISOString(),
+        transactionId: generateTransactionIdWIB(sentAt),
         sigDataUrl: sigCanvas.toDataURL('image/png')
       };
+
+      var autoDateEl = document.getElementById('auto-datetime');
+      if (autoDateEl) {
+        autoDateEl.textContent = sentDate + ' • ' + sentTime + ' WIB';
+      }
+
+      lastGeneratedData = data;
+      document.getElementById('transaction-id-preview').textContent = data.transactionId;
+      document.getElementById('transaction-preview').style.display = 'block';
 
       /*
        * Beri browser satu kesempatan untuk menyelesaikan event touch/canvas
@@ -791,6 +1009,8 @@ button {
       setTimeout(function () {
         try {
           var result = createPDF(data);
+          lastGeneratedPDF = result;
+          document.getElementById('btn-whatsapp').disabled = false;
 
           // Download lokal terlebih dahulu.
           var downloadUrl = URL.createObjectURL(result.blob);
@@ -810,7 +1030,7 @@ button {
           // Kirim salinan yang sama ke Google Apps Script.
           // text/plain adalah request sederhana sehingga tidak membutuhkan
           // preflight CORS seperti application/json.
-          fetch('https://script.google.com/macros/s/AKfycbz8eCMrW-Uo2XUYwlDFrep2d42kHcp3pcDpOkAfsn7-BtY1UhmIoIokGUbs66VcXCzG/exec', {
+          fetch(DRIVE_UPLOAD_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: {
@@ -826,7 +1046,9 @@ button {
               tanggalService: data.tanggalFormatted,
               tanggalDikirim: data.sentDate,
               jamDikirim: data.sentTime,
-              sentAtISO: data.sentAtISO
+              sentAtISO: data.sentAtISO,
+              transactionId: data.transactionId,
+              uploadKey: UPLOAD_KEY
             })
           })
           .then(function () {

@@ -269,6 +269,32 @@ select#f-model {
   margin-top: 8px;
   min-height: 18px;
 }
+
+    .address-section-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin: 18px 0 10px;
+    }
+
+    .address-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 12px;
+    }
+
+    .address-grid .field {
+      min-width: 0;
+    }
+
+    .address-grid .field.full {
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 520px) {
+      .address-grid {
+        gap: 0 8px;
+      }
+    }
 </style>
 </head>
 
@@ -327,6 +353,39 @@ select#f-model {
       <p class="error" id="err-imei">Isi IMEI/serial number</p>
     </div>
 
+    <div class="address-section-title">ALAMAT PENGIRIMAN KEMBALI</div>
+    <div class="address-grid">
+      <div class="field">
+        <label for="f-kota">Kabupaten/Kota</label>
+        <input type="text" id="f-kota" placeholder="Contoh: Kota Bandung">
+        <p class="error" id="err-kota">Isi kabupaten/kota</p>
+      </div>
+
+      <div class="field">
+        <label for="f-provinsi">Provinsi</label>
+        <input type="text" id="f-provinsi" placeholder="Contoh: Jawa Barat">
+        <p class="error" id="err-provinsi">Isi provinsi</p>
+      </div>
+
+      <div class="field">
+        <label for="f-desa">Desa/Kelurahan</label>
+        <input type="text" id="f-desa" placeholder="Contoh: Dago">
+        <p class="error" id="err-desa">Isi desa/kelurahan</p>
+      </div>
+
+      <div class="field">
+        <label for="f-kecamatan">Kecamatan</label>
+        <input type="text" id="f-kecamatan" placeholder="Contoh: Coblong">
+        <p class="error" id="err-kecamatan">Isi kecamatan</p>
+      </div>
+
+      <div class="field full">
+        <label for="f-jalan">Patokan / Alamat Lengkap</label>
+        <textarea id="f-jalan" rows="2" placeholder="Nama jalan, nomor rumah, gedung, RT/RW, patokan, atau keterangan alamat lainnya"></textarea>
+        <p class="error" id="err-jalan">Isi patokan / alamat lengkap</p>
+      </div>
+    </div>
+
     <div class="field">
       <div class="auto-date-box">
       <strong>Tanggal & jam service</strong>
@@ -378,7 +437,7 @@ select#f-model {
   var lastGeneratedPDF = null;
   var lastGeneratedData = null;
 
-  ['nama','wa','model','imei'].forEach(function(id) {
+  ['nama','wa','model','imei','provinsi','kota','kecamatan','desa','jalan'].forEach(function(id) {
     var el = document.getElementById('f-' + id);
     if (el) {
       el.addEventListener('input', function () {
@@ -563,6 +622,8 @@ select#f-model {
       'ID Transaksi: ' + data.transactionId + '\n' +
       'Perangkat: ' + data.model + '\n' +
       'IMEI/Serial: ' + data.imei + '\n' +
+      'Alamat Pengiriman Kembali:\n' +
+      data.alamat + '\n' +
       'Tanggal Service: ' + data.tanggalFormatted + '\n\n' +
       'Dokumen PDF akan saya kirim melalui WhatsApp ini. Terima kasih.';
   }
@@ -759,12 +820,11 @@ select#f-model {
       drawSectionTitle('DATA PELANGGAN');
 
       var rows = [
-        ['ID Transaksi', data.transactionId],
         ['Nama', data.nama],
         ['No. WhatsApp', data.wa],
         ['Jenis/Model HP', data.model],
         ['IMEI/Serial Number', data.imei],
-        ['Tanggal Service', data.tanggalFormatted],
+        ['Alamat', data.alamat],
         ['Tanggal & Jam Dikirim', data.sentDate + ' • ' + data.sentTime + ' WIB'],
         ['ID Transaksi', data.transactionId]
       ];
@@ -922,6 +982,12 @@ select#f-model {
     var wa = document.getElementById('f-wa').value.trim();
     var model = document.getElementById('f-model').value.trim();
     var imei = document.getElementById('f-imei').value.trim();
+    var provinsi = document.getElementById('f-provinsi').value.trim();
+    var kota = document.getElementById('f-kota').value.trim();
+    var kecamatan = document.getElementById('f-kecamatan').value.trim();
+    var desa = document.getElementById('f-desa').value.trim();
+    var jalan = document.getElementById('f-jalan').value.trim();
+    var alamat = [jalan, desa, kecamatan, kota, provinsi].filter(Boolean).join(', ');
     var setuju = document.getElementById('f-setuju').checked;
     var namaTtd = document.getElementById('f-nama-ttd').value.trim();
 
@@ -944,6 +1010,31 @@ select#f-model {
 
     if (!imei) {
       showErr('imei');
+      valid = false;
+    }
+
+    if (!provinsi) {
+      showErr('provinsi');
+      valid = false;
+    }
+
+    if (!kota) {
+      showErr('kota');
+      valid = false;
+    }
+
+    if (!kecamatan) {
+      showErr('kecamatan');
+      valid = false;
+    }
+
+    if (!desa) {
+      showErr('desa');
+      valid = false;
+    }
+
+    if (!jalan) {
+      showErr('jalan');
       valid = false;
     }
 
@@ -992,6 +1083,8 @@ select#f-model {
 
       var data = {
         nama: nama, wa: wa, model: model, imei: imei,
+        provinsi: provinsi, kota: kota, kecamatan: kecamatan, desa: desa, jalan: jalan,
+        alamat: alamat,
         tanggalFormatted: sentDate,
         namaTtd: namaTtd, sentDate: sentDate, sentTime: sentTime,
         sentAtISO: sentAt.toISOString(),
@@ -1049,6 +1142,12 @@ select#f-model {
               wa: data.wa,
               model: data.model,
               imei: data.imei,
+              alamat: data.alamat,
+              provinsi: data.provinsi,
+              kota: data.kota,
+              kecamatan: data.kecamatan,
+              desa: data.desa,
+              jalan: data.jalan,
               tanggalService: data.tanggalFormatted,
               tanggalDikirim: data.sentDate,
               jamDikirim: data.sentTime,

@@ -579,7 +579,8 @@ button {
         ['No. WhatsApp', data.wa],
         ['Jenis/Model HP', data.model],
         ['IMEI/Serial Number', data.imei],
-        ['Tanggal', data.tanggalFormatted]
+        ['Tanggal Service', data.tanggalFormatted],
+        ['Tanggal & Jam Dikirim', data.sentDate + ' • ' + data.sentTime + ' WIB']
       ];
 
       var labelW = 45;
@@ -660,28 +661,12 @@ button {
       pdf.setFontSize(8);
       pdf.setTextColor(120, 120, 120);
 
-      var footerDate = new Date().toLocaleDateString('id-ID', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8);
       pdf.setTextColor(120, 120, 120);
-      pdf.text(
-        'unlockRstore — Dokumen pernyataan service kirim unit',
-        margin,
-        y
-      );
-
+      pdf.text('unlockRstore — Dokumen pernyataan service kirim unit', margin, y);
       pdf.setTextColor(70, 70, 70);
-      pdf.text(
-        footerDate,
-        pageW - margin,
-        y,
-        { align: 'right' }
-      );
+      pdf.text('Dibuat/dikirim: ' + data.sentDate + ' • ' + data.sentTime + ' WIB', pageW - margin, y, { align: 'right' });
     }
 
     // Watermark digambar lebih dulu agar berada di belakang isi PDF.
@@ -710,11 +695,16 @@ button {
       );
     }
 
-    pdf.save(
-      'surat-pernyataan-service-' +
-      safeFileName(data.nama) +
-      '.pdf'
-    );
+    var fileStamp = data.sentAtISO.replace(/[:.]/g, '-').replace('T', '_').replace('Z', '');
+    var filename = 'surat-pernyataan-service-' + safeFileName(data.nama) + '-' + fileStamp + '.pdf';
+
+    // Kembalikan PDF sebagai Blob + Base64 agar bisa sekaligus
+    // di-download ke perangkat pelanggan dan dikirim ke Google Drive.
+    return {
+      blob: pdf.output('blob'),
+      dataUri: pdf.output('datauristring'),
+      filename: filename
+    };
   }
 
   document.getElementById('btn-download').addEventListener('click', function () {
@@ -782,13 +772,15 @@ button {
       btn.disabled = true;
       status.textContent = 'Membuat PDF...';
 
+      var sentAt = new Date();
+      var sentDate = sentAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      var sentTime = sentAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
       var data = {
-        nama: nama,
-        wa: wa,
-        model: model,
-        imei: imei,
+        nama: nama, wa: wa, model: model, imei: imei,
         tanggalFormatted: formatDate(tanggal),
-        namaTtd: namaTtd,
+        namaTtd: namaTtd, sentDate: sentDate, sentTime: sentTime,
+        sentAtISO: sentAt.toISOString(),
         sigDataUrl: sigCanvas.toDataURL('image/png')
       };
 
@@ -798,8 +790,52 @@ button {
        */
       setTimeout(function () {
         try {
-          createPDF(data);
-          status.textContent = 'PDF berhasil diunduh.';
+          var result = createPDF(data);
+
+          // Download lokal terlebih dahulu.
+          var downloadUrl = URL.createObjectURL(result.blob);
+          var link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = result.filename;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(function () {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+          }, 1000);
+
+          status.textContent = 'PDF diunduh. Mengirim salinan ke Google Drive...';
+
+          // Kirim salinan yang sama ke Google Apps Script.
+          // text/plain adalah request sederhana sehingga tidak membutuhkan
+          // preflight CORS seperti application/json.
+          fetch('https://script.google.com/macros/s/AKfycbz8eCMrW-Uo2XUYwlDFrep2d42kHcp3pcDpOkAfsn7-BtY1UhmIoIokGUbs66VcXCzG/exec', {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify({
+              pdf: result.dataUri,
+              filename: result.filename,
+              nama: data.nama,
+              wa: data.wa,
+              model: data.model,
+              imei: data.imei,
+              tanggalService: data.tanggalFormatted,
+              tanggalDikirim: data.sentDate,
+              jamDikirim: data.sentTime,
+              sentAtISO: data.sentAtISO
+            })
+          })
+          .then(function () {
+            status.textContent = 'PDF berhasil diunduh dan dikirim ke Google Drive.';
+          })
+          .catch(function (uploadError) {
+            console.error('DRIVE UPLOAD ERROR:', uploadError);
+            status.textContent = 'PDF berhasil diunduh, tetapi upload ke Google Drive gagal.';
+          });
         } catch (error) {
           console.error('PDF ERROR:', error);
           status.textContent =
